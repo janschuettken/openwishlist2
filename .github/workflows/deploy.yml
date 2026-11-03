@@ -1,0 +1,67 @@
+# Builds the web app on every push to main (or master) and copies it to the web server.
+# Same mechanism as in fountainfinder. Deploying needs these repository secrets
+# (Settings › Secrets and variables › Actions):
+#   DEPLOY_HOST  server name, e.g. jan-schuettken.de
+#   DEPLOY_USER  SSH user
+#   DEPLOY_KEY   private SSH key of that user (the public key goes into ~/.ssh/authorized_keys)
+#   DEPLOY_PATH  folder the website is served from, e.g. /var/www/openwishlist
+# Optional: DEPLOY_PORT (default 22). Without them the run fails after the build, so a missing
+# setting does not look like a successful deploy.
+#
+# The app is served from the root of its domain (the password mail links to
+# https://openwishlist.de/#/reset-password/...), so base href stays "/". If it ever moves into a
+# subfolder, add --base-href=/folder/ to the build step.
+name: Build and deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      # Runs the unit tests once the project has some (ng test fails when there are no spec files).
+      - name: Test
+        run: |
+          if [ -n "$(find src -name '*.spec.ts' -print -quit)" ]; then
+            npm test -- --watch=false
+          else
+            echo "No spec files, skipping tests."
+          fi
+      - run: npm run build
+
+      - name: Copy to the server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+        run: |
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_KEY DEPLOY_PATH; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository secret $name is missing (Settings › Secrets and variables › Actions › Secrets)."
+              exit 1
+            fi
+          done
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$DEPLOY_PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          # --delete removes files of older builds; the hashed bundle names change with every build.
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key -p $DEPLOY_PORT" \
+            dist/openwishlist2/browser/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
