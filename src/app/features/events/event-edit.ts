@@ -100,10 +100,16 @@ import { UserSearch } from '../../shared/user-search';
                         @if (m.power >= Power.Owner) {
                           <span class="chip bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">{{ 'role.owner' | t }}</span>
                         } @else {
-                          <select class="input w-auto py-1.5 pr-8 text-xs" [value]="m.power" (change)="setPower(m, val($event))" [attr.aria-label]="'list.role' | t">
-                            <option [value]="Power.Follower">{{ 'role.follower' | t }}</option>
-                            <option [value]="Power.Member">{{ 'role.member' | t }}</option>
-                          </select>
+                          @if (l().eventType !== ListType.SecretSanta) {
+                            <select
+                              class="max-w-36 rounded-lg border-0 bg-slate-100 py-1.5 pr-7 pl-2 text-xs text-slate-700 focus:ring-2 focus:ring-brand-500 dark:bg-slate-800 dark:text-slate-200"
+                              (change)="setPower(m, val($event))"
+                              [attr.aria-label]="'list.role' | t"
+                            >
+                              <option [value]="Power.Follower" [selected]="m.power < Power.Member">{{ 'role.follower' | t }}</option>
+                              <option [value]="Power.Member" [selected]="m.power >= Power.Member">{{ 'role.member' | t }}</option>
+                            </select>
+                          }
                           <button type="button" class="btn btn-ghost p-1.5 text-rose-600 dark:text-rose-400" (click)="removeMember(m)" [title]="'common.remove' | t">
                             <app-icon name="user-minus" [size]="18" />
                           </button>

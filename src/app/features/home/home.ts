@@ -106,7 +106,7 @@ export default class HomePage {
 
   protected readonly greeting = computed(() => {
     const h = new Date().getHours();
-    return h < 11 ? 'home.morning' : h < 18 ? 'home.day' : 'home.evening';
+    return h >= 5 && h < 11 ? 'home.morning' : h >= 11 && h < 18 ? 'home.day' : 'home.evening';
   });
 
   constructor() {

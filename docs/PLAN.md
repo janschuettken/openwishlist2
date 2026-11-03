@@ -78,8 +78,11 @@ src/app/
 
 Nach jedem Schritt läuft `ng build` sauber durch und ich teste gegen die echte API.
 
-## 7. Offene Entscheidungen
+## 7. Entscheidungen (03.11.2026)
 
-1. **Design/UI-Bibliothek**: Empfehlung ist ein eigenes, schlankes Design mit CSS-Variablen (hell/dunkel) ohne große UI-Bibliothek. Alternativen: Angular Material oder Bootstrap 5 (näher am alten Look).
-2. **Test-Konto**: Zum Testen gegen die echte API brauche ich ein Konto. Ich kann mir selbst eins registrieren (z. B. `test+claude@…`), oder du nennst mir eines.
-3. **Git**: Soll openwishlist2 ein eigenes Git-Repo bekommen (und ggf. ein GitHub-Remote)?
+1. **Design**: Tailwind CSS v4, eigenes neues Design. Desktop mit fester Sidebar, mobil mit Kopfzeile, Tab-Leiste unten und schwebendem Plus-Button.
+2. **PWA**: Manifest, Service Worker (`ngsw-config.json`), Icons aus dem alten Logo.
+3. **i18n**: eigene kleine Signal-Lösung statt ngx-translate (`src/app/i18n/de.ts`, `en.ts`); fehlende englische Texte fallen beim Build auf.
+4. **Git**: Repo `janschuettken/openwishlist2`, gearbeitet wird auf `dev`.
+5. **Rollen in Listen**: Besitzer (100), „Mitwünschend“ (50, darf eigene Wünsche hinzufügen), „Sieht & schenkt“ (0). Neue Teilnehmer bekommen wie bisher beim Wichteln 50, sonst 0; der Besitzer kann die Rolle ändern.
+6. **Sichtbarkeit**: Eigene Wünsche immer ohne Reservierungsstand (keine Spoiler), Wünsche anderer mit Stand und Verschenken-Button. Private Listen zeigt das Frontend nur Mitgliedern.

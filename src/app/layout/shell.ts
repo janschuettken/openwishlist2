@@ -33,7 +33,7 @@ const NAV: NavItem[] = [
   imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, Avatar, TPipe],
   template: `
     @if (auth.impersonating()) {
-      <div class="sticky top-0 z-50 flex items-center justify-center gap-3 bg-amber-400 px-4 py-1.5 text-sm font-medium text-amber-950 pt-safe">
+      <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-amber-400 px-4 py-1.5 text-sm font-medium text-amber-950 pt-safe lg:pl-64">
         <app-icon name="shield" [size]="16" />
         {{ 'admin.impersonating' | t: { name: userName() } }}
         <button type="button" class="rounded-lg bg-amber-950/10 px-2 py-0.5 hover:bg-amber-950/20" (click)="auth.backToAdmin()">

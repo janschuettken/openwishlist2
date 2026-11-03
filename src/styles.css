@@ -32,6 +32,11 @@
     @apply font-semibold tracking-tight;
   }
 
+  /* Einspaltige Grids dürfen nicht breiter als der Bildschirm werden (Date-Inputs, lange Wörter) */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   button:not(:disabled) {
     @apply cursor-pointer;
   }

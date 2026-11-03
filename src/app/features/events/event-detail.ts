@@ -348,6 +348,7 @@ export default class EventDetailPage implements OnInit {
 
   protected roleLabel(m: Member) {
     if (m.power >= Power.Owner) return 'role.owner';
+    if (this.list()?.eventType === ListType.SecretSanta) return 'role.participant';
     if (m.power >= Power.Member) return 'role.member';
     return 'role.follower';
   }

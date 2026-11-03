@@ -194,6 +194,7 @@ export const DE = {
   // Rollen
   'role.owner': 'Besitzer',
   'role.member': 'Mitwünschend',
+  'role.participant': 'Teilnehmer',
   'role.follower': 'Sieht & schenkt',
 
   // Wichteln

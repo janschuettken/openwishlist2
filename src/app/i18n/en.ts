@@ -186,6 +186,7 @@ export const EN: Record<keyof typeof DE, string> = {
 
   'role.owner': 'Owner',
   'role.member': 'Co-wisher',
+  'role.participant': 'Participant',
   'role.follower': 'Views & gifts',
 
   'santa.title': 'Secret Santa',
