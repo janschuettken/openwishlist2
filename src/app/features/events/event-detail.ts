@@ -7,7 +7,7 @@ import { AppDatePipe, I18n, TPipe } from '../../core/i18n';
 import { ListType, Member, Power, User, Wish, WishList, fullName, isFullyClaimed } from '../../core/models';
 import { PageTitle, ToastService } from '../../core/ui.services';
 import { Icon } from '../../shared/icon';
-import { Avatar, EmptyState, LIST_TYPE_META, ListTypeBadge, Loading, PageHeader, Spinner, UserRow, WishCard } from '../../shared/ui';
+import { Avatar, EmptyState, LIST_TYPE_META, ListTypeBadge, Loading, PageHeader, RichTextPipe, Spinner, UserRow, WishCard } from '../../shared/ui';
 
 interface WishGroup {
   user: Member | User;
@@ -22,7 +22,7 @@ interface WishGroup {
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, NgTemplateOutlet, TPipe, AppDatePipe, Icon, Avatar, PageHeader, ListTypeBadge, WishCard, EmptyState, Loading, Spinner, UserRow],
+  imports: [RouterLink, NgTemplateOutlet, TPipe, AppDatePipe, Icon, Avatar, PageHeader, ListTypeBadge, WishCard, EmptyState, Loading, Spinner, UserRow, RichTextPipe],
   template: `
     @if (loading()) {
       <app-loading />
@@ -55,7 +55,7 @@ interface WishGroup {
           }
         </div>
         @if (l.eventDescription) {
-          <p class="mt-3 whitespace-pre-line text-slate-700 dark:text-slate-300">{{ l.eventDescription }}</p>
+          <div class="mt-3 text-slate-700 dark:text-slate-300 [&_b]:font-semibold [&_b]:text-slate-900 dark:[&_b]:text-white" [innerHTML]="l.eventDescription | rich"></div>
         }
         @if (owner(); as o) {
           <a [routerLink]="['/user', o.userId]" class="mt-4 inline-flex items-center gap-2 text-sm">
@@ -168,32 +168,11 @@ interface WishGroup {
                 }
               </app-empty>
             }
+
           </div>
 
-          <!-- Seitenleiste: eigene Wünsche hinzufügen, Mitglieder -->
+          <!-- Seitenleiste: Teilnehmer -->
           <aside class="space-y-8">
-            @if (canAddWishes()) {
-              <section>
-                <h2 class="section-title mb-3">{{ 'list.addOwn' | t }}</h2>
-                <div class="card divide-y divide-slate-100 dark:divide-slate-800">
-                  @for (w of addable(); track w.wishId) {
-                    <div class="flex items-center gap-3 px-4 py-2.5">
-                      <span class="min-w-0 flex-1 truncate text-sm">{{ w.title }}</span>
-                      <button type="button" class="btn btn-ghost btn-sm p-1.5 text-brand-600 dark:text-brand-400" (click)="addToList(w)" [disabled]="adding() === w.wishId" [title]="'list.addWish' | t">
-                        @if (adding() === w.wishId) {
-                          <app-spinner [size]="14" />
-                        } @else {
-                          <app-icon name="plus" [size]="18" />
-                        }
-                      </button>
-                    </div>
-                  } @empty {
-                    <p class="muted p-4 text-sm">{{ 'list.addOwn.empty' | t }}</p>
-                  }
-                </div>
-              </section>
-            }
-
             @if (l.eventType !== ListType.Private && members().length > 1) {
               <section>
                 <h2 class="section-title mb-3">{{ 'list.members' | t }} ({{ members().length }})</h2>
@@ -208,6 +187,45 @@ interface WishGroup {
             }
           </aside>
         </div>
+        <!-- Eigene Wünsche, die noch nicht in der Liste sind -->
+        @if (canAddWishes() && addable().length) {
+          <section class="mt-10">
+            <h2 class="section-title mb-1">{{ 'list.addOwn' | t }}</h2>
+            <p class="muted mb-3 text-sm">{{ 'list.addOwn.hint' | t }}</p>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              @for (w of shownAddable(); track w.wishId) {
+                <button
+                  type="button"
+                  class="card group relative flex flex-col overflow-hidden text-left transition hover:shadow-md disabled:opacity-60"
+                  (click)="addToList(w)"
+                  [disabled]="adding() === w.wishId"
+                  [title]="'list.addWish' | t"
+                >
+                  <div class="flex aspect-[4/3] items-center justify-center bg-slate-100 dark:bg-slate-800">
+                    @if (w.wishImgUrl) {
+                      <img [src]="w.wishImgUrl" alt="" class="size-full object-cover" loading="lazy" />
+                    } @else {
+                      <app-icon name="gift" [size]="32" class="text-slate-300 dark:text-slate-600" />
+                    }
+                  </div>
+                  <p class="p-3 text-sm font-medium"><span class="line-clamp-2">{{ w.title }}</span></p>
+                  <span class="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-brand-600 text-white shadow-md transition group-hover:scale-110">
+                    @if (adding() === w.wishId) {
+                      <app-spinner [size]="14" />
+                    } @else {
+                      <app-icon name="plus" [size]="18" />
+                    }
+                  </span>
+                </button>
+              }
+            </div>
+            @if (addable().length > addableLimit) {
+              <button type="button" class="link mt-3 text-sm" (click)="showAllAddable.set(!showAllAddable())">
+                {{ showAllAddable() ? ('common.showLess' | t) : ('list.addOwn.all' | t: { count: addable().length }) }}
+              </button>
+            }
+          </section>
+        }
       }
 
       <ng-template #claimButtons let-w>
@@ -259,6 +277,12 @@ export default class EventDetailPage implements OnInit {
     const inList = new Set(this.groups().flatMap((g) => g.wishes.map((w) => w.wishId)));
     return this.myWishes().filter((w) => !w.archived && !inList.has(w.wishId));
   });
+
+  protected readonly addableLimit = 10;
+  protected readonly showAllAddable = signal(false);
+  protected readonly shownAddable = computed(() =>
+    this.showAllAddable() ? this.addable() : this.addable().slice(0, this.addableLimit),
+  );
 
   ngOnInit() {
     this.load();

@@ -172,6 +172,8 @@ export const DE = {
   'list.removeWish': 'Entfernen',
   'list.addOwn': 'Eigene Wünsche hinzufügen',
   'list.addOwn.empty': 'Alle deine Wünsche sind schon in der Liste.',
+  'list.addOwn.hint': 'Tippe auf einen Wunsch, um ihn zu dieser Liste hinzuzufügen.',
+  'list.addOwn.all': 'Alle {count} anzeigen',
   'list.addWish': 'Zur Liste hinzufügen',
   'list.members': 'Teilnehmer',
   'list.members.hint': 'Personen, die du hinzufügst, können die Liste sehen und Wünsche verschenken. Als „Mitwünschend“ können sie auch eigene Wünsche hinzufügen.',

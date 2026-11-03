@@ -1,9 +1,37 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Pipe, PipeTransform, computed, inject, input, output, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppDatePipe, TKey, TPipe } from '../core/i18n';
 import { ListType, User, Wish, WishList, fullName, initials, isFullyClaimed, shortUrl } from '../core/models';
 import { Icon, IconName } from './icon';
+
+// ---------------- Texte mit HTML ----------------
+
+/**
+ * Beschreibungen aus der alten App enthalten teils HTML (<br>, <b>).
+ * Reiner Text bekommt Zeilenumbrüche als <br>; Angular säubert das Ergebnis bei [innerHTML].
+ */
+@Pipe({ name: 'rich' })
+export class RichTextPipe implements PipeTransform {
+  transform(value: string | null | undefined): string {
+    if (!value) return '';
+    if (/<[a-z][\s\S]*>/i.test(value)) return value;
+    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>');
+  }
+}
+
+/** Nur den Text ohne HTML-Tags (für einzeilige Vorschauen) */
+@Pipe({ name: 'plain' })
+export class PlainTextPipe implements PipeTransform {
+  transform(value: string | null | undefined): string {
+    if (!value) return '';
+    return value
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&');
+  }
+}
 
 // ---------------- Avatar ----------------
 
@@ -173,7 +201,7 @@ export class ListTypeBadge {
 @Component({
   selector: 'app-list-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Icon, TPipe, AppDatePipe, ListTypeBadge, Avatar],
+  imports: [RouterLink, Icon, TPipe, AppDatePipe, ListTypeBadge, Avatar, PlainTextPipe],
   template: `
     <a
       [routerLink]="['/event', list().eventId]"
@@ -189,7 +217,7 @@ export class ListTypeBadge {
       </div>
       <h3 class="text-lg leading-snug text-slate-900 dark:text-slate-100">{{ list().eventTitle }}</h3>
       @if (list().eventDescription) {
-        <p class="muted mt-1 line-clamp-2 text-sm">{{ list().eventDescription }}</p>
+        <p class="muted mt-1 line-clamp-2 text-sm">{{ list().eventDescription | plain }}</p>
       }
       <div class="mt-auto flex items-center gap-3 pt-4 text-xs">
         @if (owner(); as o) {
@@ -216,7 +244,7 @@ export class ListCard {
 @Component({
   selector: 'app-wish-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Icon, TPipe],
+  imports: [Icon, TPipe, RichTextPipe],
   template: `
     <article class="card flex h-full flex-col overflow-hidden" [class.opacity-60]="wish().archived">
       <div class="flex gap-4 p-4">
@@ -240,7 +268,7 @@ export class ListCard {
             <span class="chip mt-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">{{ 'common.archived' | t }}</span>
           }
           @if (wish().description) {
-            <p class="muted mt-1 text-sm break-words whitespace-pre-line" [class.line-clamp-3]="!expanded()">{{ wish().description }}</p>
+            <p class="muted mt-1 text-sm break-words" [class.line-clamp-3]="!expanded()" [innerHTML]="wish().description | rich"></p>
             @if (wish().description.length > 140) {
               <button type="button" class="link mt-0.5 text-xs" (click)="expanded.set(!expanded())">
                 {{ (expanded() ? 'common.showLess' : 'common.showMore') | t }}

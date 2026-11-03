@@ -165,6 +165,8 @@ export const EN: Record<keyof typeof DE, string> = {
   'list.removeWish': 'Remove',
   'list.addOwn': 'Add own wishes',
   'list.addOwn.empty': 'All your wishes are already in this list.',
+  'list.addOwn.hint': 'Tap a wish to add it to this list.',
+  'list.addOwn.all': 'Show all {count}',
   'list.addWish': 'Add to list',
   'list.members': 'Participants',
   'list.members.hint': 'People you add can see the list and gift wishes. As "Co-wisher" they can also add their own wishes.',
