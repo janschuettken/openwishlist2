@@ -1,12 +1,15 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ThemeService } from './core/ui.services';
+import { Overlays } from './layout/overlays';
 
 @Component({
-  imports: [RouterOutlet],
   selector: 'app-root',
-  styleUrl: './app.css',
-  templateUrl: './app.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterOutlet, Overlays],
+  template: `<router-outlet /><app-overlays />`,
 })
 export class App {
-  protected readonly title = signal('openwishlist2');
+  // Theme-Service früh anlegen, damit Hell/Dunkel sofort greift
+  private readonly theme = inject(ThemeService);
 }
