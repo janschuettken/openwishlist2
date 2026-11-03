@@ -176,8 +176,25 @@ interface WishGroup {
           <aside class="space-y-8">
             @if (l.eventType !== ListType.Private && members().length > 1) {
               <section>
-                <h2 class="section-title mb-3">{{ 'list.members' | t }} ({{ members().length }})</h2>
-                <div class="card space-y-3 p-4">
+                <!-- Auf dem Handy eingeklappt, auf dem Desktop immer offen -->
+                <button
+                  type="button"
+                  class="card flex w-full items-center gap-3 p-4 text-left lg:hidden"
+                  (click)="membersOpen.set(!membersOpen())"
+                  [attr.aria-expanded]="membersOpen()"
+                >
+                  <span class="section-title flex-1">{{ 'list.members' | t }} ({{ members().length }})</span>
+                  @if (!membersOpen()) {
+                    <span class="flex -space-x-2">
+                      @for (m of members().slice(0, 5); track m.userId) {
+                        <app-avatar [user]="m" [size]="26" class="ring-2 ring-white dark:ring-slate-900" />
+                      }
+                    </span>
+                  }
+                  <app-icon name="chevron-down" [size]="18" class="text-slate-400 transition" [class.rotate-180]="membersOpen()" />
+                </button>
+                <h2 class="section-title mb-3 hidden lg:block">{{ 'list.members' | t }} ({{ members().length }})</h2>
+                <div class="card mt-2 space-y-3 p-4 lg:mt-0 lg:block" [class.hidden]="!membersOpen()">
                   @for (m of members(); track m.userId) {
                     <a [routerLink]="['/user', m.userId]" class="block">
                       <app-user-row [user]="m" [size]="32" [sub]="roleLabel(m) | t" />
@@ -279,6 +296,7 @@ export default class EventDetailPage implements OnInit {
   });
 
   protected readonly preview = inject(WishPreview);
+  protected readonly membersOpen = signal(false);
 
   ngOnInit() {
     this.load();
