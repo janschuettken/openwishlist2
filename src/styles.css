@@ -99,6 +99,11 @@
   @apply text-xs font-semibold tracking-wider text-slate-500 uppercase dark:text-slate-400;
 }
 
+/* Überschrift über Wunsch-Bereichen: deutlich größer als section-title */
+@utility section-heading {
+  @apply text-xl font-semibold tracking-tight text-slate-900 lg:text-2xl dark:text-white;
+}
+
 @utility link {
   @apply font-medium text-brand-600 hover:underline dark:text-brand-400;
 }

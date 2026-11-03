@@ -111,7 +111,7 @@ interface WishGroup {
 
               @if (receiver(); as r) {
                 <section>
-                  <h2 class="section-title mb-3">{{ 'santa.receiverWishes' | t: { name: r.firstName } }}</h2>
+                  <h2 class="section-heading mb-4">{{ 'santa.receiverWishes' | t: { name: r.firstName } }}</h2>
                   <div class="grid gap-4 xl:grid-cols-2">
                     @for (w of receiverWishes(); track w.wishId) {
                       <app-wish-card [wish]="w" [showClaim]="true">
@@ -128,11 +128,11 @@ interface WishGroup {
             <!-- Wünsche, gruppiert nach Person -->
             @for (g of groups(); track g.user.userId) {
               <section>
-                <div class="mb-3 flex items-center gap-2">
+                <div class="mb-4 flex items-center gap-3">
                   @if (groups().length > 1 || !g.own) {
-                    <app-avatar [user]="g.user" [size]="24" />
+                    <app-avatar [user]="g.user" [size]="36" />
                   }
-                  <h2 class="section-title flex-1">
+                  <h2 class="section-heading flex-1">
                     @if (g.own) {
                       {{ (l.eventType === ListType.SecretSanta ? 'santa.myWishes' : 'list.myWishes') | t }}
                     } @else {
@@ -190,7 +190,7 @@ interface WishGroup {
         <!-- Eigene Wünsche, die noch nicht in der Liste sind -->
         @if (canAddWishes() && addable().length) {
           <section class="mt-10">
-            <h2 class="section-title mb-1">{{ 'list.addOwn' | t }}</h2>
+            <h2 class="section-heading mb-1">{{ 'list.addOwn' | t }}</h2>
             <p class="muted mb-3 text-sm">{{ 'list.addOwn.hint' | t }}</p>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               @for (w of shownAddable(); track w.wishId) {
