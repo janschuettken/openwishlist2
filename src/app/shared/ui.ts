@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { AppDatePipe, TKey, TPipe } from '../core/i18n';
 import { ListType, User, Wish, WishList, fullName, initials, isFullyClaimed, shortUrl } from '../core/models';
 import { Icon, IconName } from './icon';
+import { PreviewAction, WishPreview } from './wish-preview.service';
 
 // ---------------- Texte mit HTML ----------------
 
@@ -247,7 +248,7 @@ export class ListCard {
   imports: [Icon, TPipe, RichTextPipe],
   template: `
     <article class="card flex h-full flex-col overflow-hidden" [class.opacity-60]="wish().archived">
-      <div class="flex gap-4 p-4">
+      <div class="flex cursor-pointer gap-4 p-4" (click)="openPreview()">
         <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 sm:size-24 dark:bg-slate-800">
           @if (wish().wishImgUrl && !imgFailed()) {
             <img [src]="wish().wishImgUrl" [alt]="wish().title" class="size-full object-cover" loading="lazy" (error)="imgFailed.set(true)" />
@@ -259,7 +260,7 @@ export class ListCard {
           <div class="flex items-start gap-2">
             <h3 class="min-w-0 flex-1 font-semibold leading-snug break-words">{{ wish().title }}</h3>
             @if (editable()) {
-              <button type="button" class="btn btn-ghost -mt-1 -mr-2 p-1.5" (click)="edit.emit(wish())" [attr.aria-label]="'common.edit' | t">
+              <button type="button" class="btn btn-ghost -mt-1 -mr-2 p-1.5" (click)="$event.stopPropagation(); edit.emit(wish())" [attr.aria-label]="'common.edit' | t">
                 <app-icon name="edit" [size]="16" />
               </button>
             }
@@ -270,13 +271,13 @@ export class ListCard {
           @if (wish().description) {
             <p class="muted mt-1 text-sm break-words" [class.line-clamp-3]="!expanded()" [innerHTML]="wish().description | rich"></p>
             @if (wish().description.length > 140) {
-              <button type="button" class="link mt-0.5 text-xs" (click)="expanded.set(!expanded())">
+              <button type="button" class="link mt-0.5 text-xs" (click)="$event.stopPropagation(); expanded.set(!expanded())">
                 {{ (expanded() ? 'common.showLess' : 'common.showMore') | t }}
               </button>
             }
           }
           @if (wish().url) {
-            <a [href]="wish().url" target="_blank" rel="noopener noreferrer" class="link mt-2 inline-flex items-center gap-1 text-sm">
+            <a [href]="wish().url" target="_blank" rel="noopener noreferrer" class="link mt-2 inline-flex items-center gap-1 text-sm" (click)="$event.stopPropagation()">
               <app-icon name="external" [size]="14" />{{ host() }}
             </a>
           }
@@ -310,12 +311,19 @@ export class WishCard {
   readonly wish = input.required<Wish>();
   readonly editable = input(false);
   readonly showClaim = input(false);
+  /** Buttons im großen Vorschau-Dialog, der sich beim Klick auf die Karte öffnet */
+  readonly previewActions = input<PreviewAction[]>([]);
   readonly edit = output<Wish>();
+  private readonly preview = inject(WishPreview);
   protected readonly expanded = signal(false);
   protected readonly imgFailed = signal(false);
   protected readonly host = computed(() => shortUrl(this.wish().url));
   protected readonly full = computed(() => isFullyClaimed(this.wish()));
   protected readonly percent = computed(() => Math.min(100, (this.wish().totalClaimed ?? 0) * 100));
+
+  protected openPreview() {
+    this.preview.open(this.wish(), this.previewActions());
+  }
 }
 
 // ---------------- Nutzer-Zeile ----------------

@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { AppDatePipe, I18n, TPipe } from '../../core/i18n';
-import { ListType, Member, Power, User, Wish, WishList, fullName, isFullyClaimed, shortUrl } from '../../core/models';
+import { ListType, Member, Power, User, Wish, WishList, fullName, isFullyClaimed } from '../../core/models';
 import { PageTitle, ToastService } from '../../core/ui.services';
 import { Icon } from '../../shared/icon';
+import { PreviewAction, WishPreview } from '../../shared/wish-preview.service';
 import { Avatar, EmptyState, LIST_TYPE_META, ListTypeBadge, Loading, PageHeader, RichTextPipe, Spinner, UserRow, WishCard } from '../../shared/ui';
 
 interface WishGroup {
@@ -114,7 +115,7 @@ interface WishGroup {
                   <h2 class="section-heading mb-4">{{ 'santa.receiverWishes' | t: { name: r.firstName } }}</h2>
                   <div class="grid gap-4 xl:grid-cols-2">
                     @for (w of receiverWishes(); track w.wishId) {
-                      <app-wish-card [wish]="w" [showClaim]="true">
+                      <app-wish-card [wish]="w" [showClaim]="true" [previewActions]="claimActions(w)">
                         <ng-container *ngTemplateOutlet="claimButtons; context: { $implicit: w }" />
                       </app-wish-card>
                     } @empty {
@@ -145,7 +146,7 @@ interface WishGroup {
                 </div>
                 <div class="grid gap-4 xl:grid-cols-2">
                   @for (w of g.wishes; track w.wishId) {
-                    <app-wish-card [wish]="w" [showClaim]="!g.own">
+                    <app-wish-card [wish]="w" [showClaim]="!g.own" [previewActions]="g.own ? ownActions(w) : claimActions(w)">
                       @if (g.own || isOwner()) {
                         <button type="button" class="btn btn-ghost btn-sm text-rose-600 dark:text-rose-400" (click)="removeFromList(w)">
                           <app-icon name="x" [size]="14" />{{ 'list.removeWish' | t }}
@@ -195,7 +196,7 @@ interface WishGroup {
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               @for (w of shownAddable(); track w.wishId) {
                 <div class="card group relative flex flex-col overflow-hidden transition hover:shadow-md">
-                  <button type="button" class="flex flex-1 flex-col text-left" (click)="preview.set(w)" [attr.aria-label]="w.title">
+                  <button type="button" class="flex flex-1 flex-col text-left" (click)="preview.open(w, [addAction(w)])" [attr.aria-label]="w.title">
                     <div class="flex aspect-[4/3] w-full items-center justify-center bg-slate-100 dark:bg-slate-800">
                       @if (w.wishImgUrl) {
                         <img [src]="w.wishImgUrl" alt="" class="size-full object-cover" loading="lazy" />
@@ -231,51 +232,6 @@ interface WishGroup {
         }
       }
 
-      <!-- Vorschau eines eigenen Wunsches vor dem Hinzufügen -->
-      @if (preview(); as w) {
-        <div class="fixed inset-0 z-[65] flex items-end justify-center bg-slate-950/60 backdrop-blur-sm sm:items-center sm:p-4" (click)="preview.set(null)" (keydown.escape)="preview.set(null)">
-          <div
-            class="card flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-b-none pb-safe sm:rounded-b-2xl"
-            role="dialog"
-            aria-modal="true"
-            (click)="$event.stopPropagation()"
-          >
-            <div class="relative flex max-h-[45dvh] min-h-40 items-center justify-center bg-slate-100 dark:bg-slate-800">
-              @if (w.wishImgUrl) {
-                <img [src]="w.wishImgUrl" alt="" class="max-h-[45dvh] w-full object-contain" />
-              } @else {
-                <app-icon name="gift" [size]="56" class="text-slate-300 dark:text-slate-600" />
-              }
-              <button type="button" class="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-slate-900/60 text-white hover:bg-slate-900/80" (click)="preview.set(null)" aria-label="Schließen">
-                <app-icon name="x" [size]="18" />
-              </button>
-            </div>
-            <div class="overflow-y-auto p-5">
-              <h3 class="text-lg font-semibold break-words">{{ w.title }}</h3>
-              @if (w.description) {
-                <p class="muted mt-2 text-sm break-words" [innerHTML]="w.description | rich"></p>
-              }
-              @if (w.url) {
-                <a [href]="w.url" target="_blank" rel="noopener noreferrer" class="link mt-3 inline-flex items-center gap-1 text-sm">
-                  <app-icon name="external" [size]="14" />{{ host(w.url) }}
-                </a>
-              }
-            </div>
-            <div class="flex flex-col-reverse gap-2 border-t border-slate-100 p-4 sm:flex-row sm:justify-end dark:border-slate-800">
-              <a [routerLink]="['/wish-edit', w.wishId]" class="btn btn-ghost"><app-icon name="edit" [size]="16" />{{ 'common.edit' | t }}</a>
-              <button type="button" class="btn btn-primary" (click)="addToList(w)" [disabled]="adding() === w.wishId">
-                @if (adding() === w.wishId) {
-                  <app-spinner />
-                } @else {
-                  <app-icon name="plus" [size]="18" />
-                }
-                {{ 'list.addWish' | t }}
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-
       <ng-template #claimButtons let-w>
         @if (w.claimedByUser > 0) {
           <button type="button" class="btn btn-secondary btn-sm" (click)="unclaim(w)" [disabled]="busy()">
@@ -292,6 +248,7 @@ interface WishGroup {
 })
 export default class EventDetailPage implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
   private readonly auth = inject(AuthStore);
   private readonly toast = inject(ToastService);
   private readonly i18n = inject(I18n);
@@ -326,8 +283,7 @@ export default class EventDetailPage implements OnInit {
     return this.myWishes().filter((w) => !w.archived && !inList.has(w.wishId));
   });
 
-  protected readonly preview = signal<Wish | null>(null);
-  protected readonly host = shortUrl;
+  protected readonly preview = inject(WishPreview);
   protected readonly addableLimit = 10;
   protected readonly showAllAddable = signal(false);
   protected readonly shownAddable = computed(() =>
@@ -427,6 +383,25 @@ export default class EventDetailPage implements OnInit {
     return 'role.follower';
   }
 
+  // ---------- Aktionen im Vorschau-Dialog ----------
+
+  protected addAction(w: Wish): PreviewAction {
+    return { label: this.i18n.t('list.addWish'), icon: 'plus', run: () => this.addToList(w) };
+  }
+
+  protected claimActions(w: Wish): PreviewAction[] {
+    if (w.claimedByUser > 0) return [{ label: this.i18n.t('claim.undo'), icon: 'undo', style: 'secondary', run: () => this.unclaim(w) }];
+    if (isFullyClaimed(w)) return [];
+    return [{ label: this.i18n.t('claim.do'), icon: 'gift', style: 'success', run: () => this.claim(w) }];
+  }
+
+  protected ownActions(w: Wish): PreviewAction[] {
+    return [
+      { label: this.i18n.t('list.removeWish'), icon: 'x', style: 'ghost', run: () => this.removeFromList(w) },
+      { label: this.i18n.t('common.edit'), icon: 'edit', style: 'secondary', run: () => this.router.navigate(['/wish-edit', w.wishId]) },
+    ];
+  }
+
   // ---------- Aktionen ----------
 
   private async run(fn: () => Promise<unknown>, success?: string) {
@@ -460,7 +435,6 @@ export default class EventDetailPage implements OnInit {
     try {
       await this.api.addWishToList(this.eventId, w.wishId);
       await this.loadWishes();
-      this.preview.set(null);
       this.toast.success(this.i18n.t('list.wishAdded'));
     } catch (e) {
       this.toast.error(e);

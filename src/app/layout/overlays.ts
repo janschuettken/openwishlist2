@@ -2,13 +2,16 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TPipe } from '../core/i18n';
 import { ConfirmService, ToastService } from '../core/ui.services';
 import { Icon } from '../shared/icon';
+import { WishPreviewDialog } from '../shared/wish-preview';
 
 /** Toasts (oben rechts auf Desktop, über der Tab-Leiste auf dem Handy) und Bestätigungsdialog */
 @Component({
   selector: 'app-overlays',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Icon, TPipe],
+  imports: [Icon, TPipe, WishPreviewDialog],
   template: `
+    <app-wish-preview />
+
     <div class="pointer-events-none fixed inset-x-0 bottom-24 z-[60] flex flex-col items-center gap-2 px-4 lg:top-6 lg:right-6 lg:bottom-auto lg:left-auto lg:items-end">
       @for (t of toasts.toasts(); track t.id) {
         <div
