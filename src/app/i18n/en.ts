@@ -81,7 +81,7 @@ export const EN: Record<keyof typeof DE, string> = {
   'home.noLists.text': 'Create a wishlist, e.g. "Birthday" or "Christmas", and add your wishes.',
   'home.followedLists': 'Lists I follow',
   'home.noFollowedLists': 'You are not following any wishlist yet. Open a shared list and tap "Follow".',
-  'home.people': 'People',
+  'home.people': 'People you follow',
   'home.noPeople': 'You are not following anyone yet.',
 
   'wishes.subtitle': 'Everything you wish for. Add wishes to wishlists to share them.',

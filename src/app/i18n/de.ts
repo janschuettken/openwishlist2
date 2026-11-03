@@ -84,7 +84,7 @@ export const DE = {
   'home.noLists.text': 'Leg eine Wunschliste an, z. B. „Geburtstag“ oder „Weihnachten“, und füge deine Wünsche hinzu.',
   'home.followedLists': 'Listen, denen ich folge',
   'home.noFollowedLists': 'Du folgst noch keiner Wunschliste. Öffne eine geteilte Liste und tippe auf „Folgen“.',
-  'home.people': 'Personen',
+  'home.people': 'Personen, denen du folgst',
   'home.noPeople': 'Du folgst noch niemandem.',
 
   // Wünsche
