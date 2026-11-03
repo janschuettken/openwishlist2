@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationStart, Router } from '@angular/router';
-import { TPipe } from '../core/i18n';
+import { AuthStore } from '../core/auth.store';
+import { I18n, TPipe } from '../core/i18n';
 import { Wish, shortUrl } from '../core/models';
 import { ToastService } from '../core/ui.services';
 import { Icon } from './icon';
@@ -52,9 +53,9 @@ import { RichTextPipe, Spinner } from './ui';
               </a>
             }
           </div>
-          @if (c.actions.length) {
+          @if (actions().length) {
             <div class="flex flex-col-reverse gap-2 border-t border-slate-100 p-4 sm:flex-row sm:justify-end dark:border-slate-800">
-              @for (a of c.actions; track a.label) {
+              @for (a of actions(); track a.label) {
                 <button type="button" class="btn" [class]="'btn-' + (a.style ?? 'primary')" (click)="run(a)" [disabled]="busy()">
                   @if (busy() === a.label) {
                     <app-spinner />
@@ -76,11 +77,27 @@ export class WishPreviewDialog {
   private readonly toast = inject(ToastService);
   protected readonly busy = signal<string | null>(null);
   protected readonly host = shortUrl;
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthStore);
+  private readonly i18n = inject(I18n);
+
+  /** Aktionen des Aufrufers, bei eigenen Wünschen immer plus „Bearbeiten“ */
+  protected readonly actions = computed<PreviewAction[]>(() => {
+    const c = this.preview.current();
+    if (!c) return [];
+    if (c.wish.userId !== this.auth.user()?.userId) return c.actions;
+    const edit: PreviewAction = {
+      label: this.i18n.t('common.edit'),
+      icon: 'edit',
+      style: c.actions.length ? 'secondary' : 'primary',
+      run: () => this.router.navigate(['/wish-edit', c.wish.wishId]),
+    };
+    return [edit, ...c.actions];
+  });
 
   constructor() {
     // Beim Seitenwechsel (z. B. Zurück-Taste auf dem Handy) Dialog schließen
-    inject(Router)
-      .events.pipe(takeUntilDestroyed())
+    this.router.events.pipe(takeUntilDestroyed())
       .subscribe((e) => e instanceof NavigationStart && this.preview.close());
   }
 

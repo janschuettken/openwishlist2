@@ -6,7 +6,6 @@ import { I18n, TPipe } from '../../core/i18n';
 import { Wish } from '../../core/models';
 import { PageTitle, ToastService } from '../../core/ui.services';
 import { Icon } from '../../shared/icon';
-import { PreviewAction } from '../../shared/wish-preview.service';
 import { EmptyState, Loading, PageHeader, WishCard } from '../../shared/ui';
 
 @Component({
@@ -31,7 +30,7 @@ import { EmptyState, Loading, PageHeader, WishCard } from '../../shared/ui';
     } @else if (shown().length) {
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
         @for (w of shown(); track w.wishId) {
-          <app-wish-card [wish]="w" [editable]="true" [previewActions]="[editAction(w)]" (edit)="router.navigate(['/wish-edit', w.wishId])" />
+          <app-wish-card [wish]="w" [editable]="true" (edit)="router.navigate(['/wish-edit', w.wishId])" />
         }
       </div>
     } @else if (tab() === 'active') {
@@ -72,10 +71,6 @@ export default class WishesPage {
   constructor() {
     inject(PageTitle).set(this.i18n.t('nav.wishes'));
     this.load();
-  }
-
-  protected editAction(w: Wish): PreviewAction {
-    return { label: this.i18n.t('common.edit'), icon: 'edit', run: () => this.router.navigate(['/wish-edit', w.wishId]) };
   }
 
   private async load() {

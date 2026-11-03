@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { AppDatePipe, I18n, TPipe } from '../../core/i18n';
@@ -260,7 +260,6 @@ interface WishGroup {
 })
 export default class EventDetailPage implements OnInit {
   private readonly api = inject(ApiService);
-  private readonly router = inject(Router);
   private readonly auth = inject(AuthStore);
   private readonly toast = inject(ToastService);
   private readonly i18n = inject(I18n);
@@ -404,10 +403,7 @@ export default class EventDetailPage implements OnInit {
   }
 
   protected ownActions(w: Wish): PreviewAction[] {
-    return [
-      { label: this.i18n.t('list.removeWish'), icon: 'x', style: 'ghost', run: () => this.removeFromList(w) },
-      { label: this.i18n.t('common.edit'), icon: 'edit', style: 'secondary', run: () => this.router.navigate(['/wish-edit', w.wishId]) },
-    ];
+    return [{ label: this.i18n.t('list.removeWish'), icon: 'x', style: 'ghost', run: () => this.removeFromList(w) }];
   }
 
   // ---------- Aktionen ----------
