@@ -194,7 +194,7 @@ interface WishGroup {
             <h2 class="section-heading mb-1">{{ 'list.addOwn' | t }}</h2>
             <p class="muted mb-3 text-sm">{{ 'list.addOwn.hint' | t }}</p>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              @for (w of shownAddable(); track w.wishId) {
+              @for (w of addable(); track w.wishId) {
                 <div class="card group relative flex flex-col overflow-hidden transition hover:shadow-md">
                   <button type="button" class="flex flex-1 flex-col text-left" (click)="preview.open(w, [addAction(w)])" [attr.aria-label]="w.title">
                     <div class="flex aspect-[4/3] w-full items-center justify-center bg-slate-100 dark:bg-slate-800">
@@ -223,11 +223,6 @@ interface WishGroup {
                 </div>
               }
             </div>
-            @if (addable().length > addableLimit) {
-              <button type="button" class="link mt-3 text-sm" (click)="showAllAddable.set(!showAllAddable())">
-                {{ showAllAddable() ? ('common.showLess' | t) : ('list.addOwn.all' | t: { count: addable().length }) }}
-              </button>
-            }
           </section>
         }
       }
@@ -284,11 +279,6 @@ export default class EventDetailPage implements OnInit {
   });
 
   protected readonly preview = inject(WishPreview);
-  protected readonly addableLimit = 10;
-  protected readonly showAllAddable = signal(false);
-  protected readonly shownAddable = computed(() =>
-    this.showAllAddable() ? this.addable() : this.addable().slice(0, this.addableLimit),
-  );
 
   ngOnInit() {
     this.load();
