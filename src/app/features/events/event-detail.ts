@@ -139,6 +139,7 @@ interface WishGroup {
                     } @else {
                       {{ 'list.wishesOf' | t: { name: g.user.firstName } }}
                     }
+                    <span class="muted font-normal">({{ g.wishes.length }})</span>
                   </h2>
                   @if (g.own) {
                     <a [routerLink]="['/wish-edit', -1, l.eventId]" class="btn btn-primary btn-sm"><app-icon name="plus" [size]="16" />{{ 'wish.new' | t }}</a>
@@ -208,7 +209,7 @@ interface WishGroup {
         <!-- Eigene Wünsche, die noch nicht in der Liste sind -->
         @if (canAddWishes() && addable().length) {
           <section class="mt-10">
-            <h2 class="section-heading mb-1">{{ 'list.addOwn' | t }}</h2>
+            <h2 class="section-heading mb-1">{{ 'list.addOwn' | t }} <span class="muted font-normal">({{ addable().length }})</span></h2>
             <p class="muted mb-3 text-sm">{{ 'list.addOwn.hint' | t }}</p>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               @for (w of addable(); track w.wishId) {
