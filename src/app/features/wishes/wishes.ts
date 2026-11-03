@@ -29,7 +29,7 @@ import { EmptyState, Loading, PageHeader, WishCard } from '../../shared/ui';
     @if (loading()) {
       <app-loading />
     } @else if (shown().length) {
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
         @for (w of shown(); track w.wishId) {
           <app-wish-card [wish]="w" [editable]="true" [previewActions]="[editAction(w)]" (edit)="router.navigate(['/wish-edit', w.wishId])" />
         }

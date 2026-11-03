@@ -245,46 +245,40 @@ export class ListCard {
 @Component({
   selector: 'app-wish-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Icon, TPipe, RichTextPipe],
+  imports: [Icon, TPipe],
   template: `
-    <article class="card flex h-full flex-col overflow-hidden" [class.opacity-60]="wish().archived">
-      <div class="flex cursor-pointer gap-4 p-4" (click)="openPreview()">
-        <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 sm:size-24 dark:bg-slate-800">
-          @if (wish().wishImgUrl && !imgFailed()) {
-            <img [src]="wish().wishImgUrl" [alt]="wish().title" class="size-full object-cover" loading="lazy" (error)="imgFailed.set(true)" />
+    <article class="card group relative flex h-full flex-col overflow-hidden" [class.opacity-60]="wish().archived">
+      <!-- Bild und Titel öffnen die große Vorschau -->
+      <button type="button" class="relative block w-full text-left" (click)="openPreview()" [attr.aria-label]="wish().title">
+        <div class="flex aspect-[4/3] w-full items-center justify-center overflow-hidden" [class]="hasImage() ? 'bg-white' : 'bg-slate-100 dark:bg-slate-800'">
+          @if (hasImage()) {
+            <img [src]="wish().wishImgUrl" alt="" class="size-full object-contain p-2 transition group-hover:scale-[1.03]" loading="lazy" (error)="imgFailed.set(true)" />
           } @else {
-            <app-icon name="gift" [size]="28" class="text-slate-300 dark:text-slate-600" />
+            <app-icon name="gift" [size]="40" class="text-slate-300 dark:text-slate-600" />
           }
         </div>
-        <div class="min-w-0 flex-1">
-          <div class="flex items-start gap-2">
-            <h3 class="min-w-0 flex-1 font-semibold leading-snug break-words">{{ wish().title }}</h3>
-            @if (editable()) {
-              <button type="button" class="btn btn-ghost -mt-1 -mr-2 p-1.5" (click)="$event.stopPropagation(); edit.emit(wish())" [attr.aria-label]="'common.edit' | t">
-                <app-icon name="edit" [size]="16" />
-              </button>
-            }
-          </div>
-          @if (wish().archived) {
-            <span class="chip mt-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">{{ 'common.archived' | t }}</span>
-          }
-          @if (wish().description) {
-            <p class="muted mt-1 text-sm break-words" [class.line-clamp-3]="!expanded()" [innerHTML]="wish().description | rich"></p>
-            @if (wish().description.length > 140) {
-              <button type="button" class="link mt-0.5 text-xs" (click)="$event.stopPropagation(); expanded.set(!expanded())">
-                {{ (expanded() ? 'common.showLess' : 'common.showMore') | t }}
-              </button>
-            }
-          }
+        @if (wish().archived) {
+          <span class="chip absolute top-2 left-2 bg-slate-900/70 text-white">{{ 'common.archived' | t }}</span>
+        }
+        <div class="p-3">
+          <h3 class="line-clamp-2 text-sm leading-snug font-semibold break-words sm:text-[15px]" [title]="wish().title">{{ wish().title }}</h3>
           @if (wish().url) {
-            <a [href]="wish().url" target="_blank" rel="noopener noreferrer" class="link mt-2 inline-flex items-center gap-1 text-sm" (click)="$event.stopPropagation()">
-              <app-icon name="external" [size]="14" />{{ host() }}
-            </a>
+            <p class="muted mt-1 flex items-center gap-1 truncate text-xs"><app-icon name="link" [size]="12" />{{ host() }}</p>
           }
         </div>
-      </div>
+      </button>
+      @if (editable()) {
+        <button
+          type="button"
+          class="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-white dark:bg-slate-900/90 dark:text-slate-200 dark:ring-slate-700"
+          (click)="edit.emit(wish())"
+          [attr.aria-label]="'common.edit' | t"
+        >
+          <app-icon name="edit" [size]="15" />
+        </button>
+      }
       @if (showClaim() && wish().totalClaimed !== null) {
-        <div class="px-4 pb-3">
+        <div class="px-3 pb-3">
           <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div class="h-full rounded-full transition-all" [class]="full() ? 'bg-emerald-500' : 'bg-brand-500'" [style.width.%]="percent()"></div>
           </div>
@@ -301,7 +295,7 @@ export class ListCard {
           </p>
         </div>
       }
-      <div class="mt-auto flex flex-wrap items-center gap-2 border-t border-slate-100 px-4 py-3 empty:hidden dark:border-slate-800">
+      <div class="mt-auto flex flex-wrap items-center gap-2 px-3 pb-3 empty:hidden [&>*]:flex-1">
         <ng-content />
       </div>
     </article>
@@ -315,8 +309,8 @@ export class WishCard {
   readonly previewActions = input<PreviewAction[]>([]);
   readonly edit = output<Wish>();
   private readonly preview = inject(WishPreview);
-  protected readonly expanded = signal(false);
   protected readonly imgFailed = signal(false);
+  protected readonly hasImage = computed(() => !!this.wish().wishImgUrl && !this.imgFailed());
   protected readonly host = computed(() => shortUrl(this.wish().url));
   protected readonly full = computed(() => isFullyClaimed(this.wish()));
   protected readonly percent = computed(() => Math.min(100, (this.wish().totalClaimed ?? 0) * 100));

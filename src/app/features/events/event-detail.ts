@@ -89,7 +89,7 @@ interface WishGroup {
         <app-empty icon="lock" [title]="'list.private' | t" [text]="'list.private.text' | t" />
       } @else {
         <div class="grid gap-8 lg:grid-cols-[1fr_300px]">
-          <div class="min-w-0 space-y-10">
+          <div class="@container min-w-0 space-y-10">
             <!-- Wichteln -->
             @if (l.eventType === ListType.SecretSanta) {
               <section class="overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 to-orange-500 p-5 text-white lg:p-6">
@@ -113,7 +113,7 @@ interface WishGroup {
               @if (receiver(); as r) {
                 <section>
                   <h2 class="section-heading mb-4">{{ 'santa.receiverWishes' | t: { name: r.firstName } }}</h2>
-                  <div class="grid gap-4 xl:grid-cols-2">
+                  <div class="grid grid-cols-2 gap-3 sm:gap-4 @xl:grid-cols-3 @4xl:grid-cols-4">
                     @for (w of receiverWishes(); track w.wishId) {
                       <app-wish-card [wish]="w" [showClaim]="true" [previewActions]="claimActions(w)">
                         <ng-container *ngTemplateOutlet="claimButtons; context: { $implicit: w }" />
@@ -144,7 +144,7 @@ interface WishGroup {
                     <a [routerLink]="['/wish-edit', -1, l.eventId]" class="btn btn-primary btn-sm"><app-icon name="plus" [size]="16" />{{ 'wish.new' | t }}</a>
                   }
                 </div>
-                <div class="grid gap-4 xl:grid-cols-2">
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 @xl:grid-cols-3 @4xl:grid-cols-4">
                   @for (w of g.wishes; track w.wishId) {
                     <app-wish-card [wish]="w" [showClaim]="!g.own" [previewActions]="g.own ? ownActions(w) : claimActions(w)">
                       @if (g.own || isOwner()) {
