@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { AppDatePipe, I18n, TPipe } from '../../core/i18n';
-import { ListType, Member, Power, User, Wish, WishList, fullName, isFullyClaimed } from '../../core/models';
+import { ListType, Member, Power, User, Wish, WishList, fullName, isFullyClaimed, shortUrl } from '../../core/models';
 import { PageTitle, ToastService } from '../../core/ui.services';
 import { Icon } from '../../shared/icon';
 import { Avatar, EmptyState, LIST_TYPE_META, ListTypeBadge, Loading, PageHeader, RichTextPipe, Spinner, UserRow, WishCard } from '../../shared/ui';
@@ -194,29 +194,32 @@ interface WishGroup {
             <p class="muted mb-3 text-sm">{{ 'list.addOwn.hint' | t }}</p>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               @for (w of shownAddable(); track w.wishId) {
-                <button
-                  type="button"
-                  class="card group relative flex flex-col overflow-hidden text-left transition hover:shadow-md disabled:opacity-60"
-                  (click)="addToList(w)"
-                  [disabled]="adding() === w.wishId"
-                  [title]="'list.addWish' | t"
-                >
-                  <div class="flex aspect-[4/3] items-center justify-center bg-slate-100 dark:bg-slate-800">
-                    @if (w.wishImgUrl) {
-                      <img [src]="w.wishImgUrl" alt="" class="size-full object-cover" loading="lazy" />
-                    } @else {
-                      <app-icon name="gift" [size]="32" class="text-slate-300 dark:text-slate-600" />
-                    }
-                  </div>
-                  <p class="p-3 text-sm font-medium"><span class="line-clamp-2">{{ w.title }}</span></p>
-                  <span class="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-brand-600 text-white shadow-md transition group-hover:scale-110">
+                <div class="card group relative flex flex-col overflow-hidden transition hover:shadow-md">
+                  <button type="button" class="flex flex-1 flex-col text-left" (click)="preview.set(w)" [attr.aria-label]="w.title">
+                    <div class="flex aspect-[4/3] w-full items-center justify-center bg-slate-100 dark:bg-slate-800">
+                      @if (w.wishImgUrl) {
+                        <img [src]="w.wishImgUrl" alt="" class="size-full object-cover" loading="lazy" />
+                      } @else {
+                        <app-icon name="gift" [size]="32" class="text-slate-300 dark:text-slate-600" />
+                      }
+                    </div>
+                    <p class="p-3 text-sm font-medium"><span class="line-clamp-2">{{ w.title }}</span></p>
+                  </button>
+                  <button
+                    type="button"
+                    class="absolute top-2 right-2 flex size-9 items-center justify-center rounded-full bg-brand-600 text-white shadow-md transition hover:scale-110 hover:bg-brand-700 disabled:opacity-60"
+                    (click)="addToList(w)"
+                    [disabled]="adding() === w.wishId"
+                    [title]="'list.addWish' | t"
+                    [attr.aria-label]="'list.addWish' | t"
+                  >
                     @if (adding() === w.wishId) {
                       <app-spinner [size]="14" />
                     } @else {
-                      <app-icon name="plus" [size]="18" />
+                      <app-icon name="plus" [size]="20" />
                     }
-                  </span>
-                </button>
+                  </button>
+                </div>
               }
             </div>
             @if (addable().length > addableLimit) {
@@ -226,6 +229,51 @@ interface WishGroup {
             }
           </section>
         }
+      }
+
+      <!-- Vorschau eines eigenen Wunsches vor dem Hinzufügen -->
+      @if (preview(); as w) {
+        <div class="fixed inset-0 z-[65] flex items-end justify-center bg-slate-950/60 backdrop-blur-sm sm:items-center sm:p-4" (click)="preview.set(null)" (keydown.escape)="preview.set(null)">
+          <div
+            class="card flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-b-none pb-safe sm:rounded-b-2xl"
+            role="dialog"
+            aria-modal="true"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="relative flex max-h-[45dvh] min-h-40 items-center justify-center bg-slate-100 dark:bg-slate-800">
+              @if (w.wishImgUrl) {
+                <img [src]="w.wishImgUrl" alt="" class="max-h-[45dvh] w-full object-contain" />
+              } @else {
+                <app-icon name="gift" [size]="56" class="text-slate-300 dark:text-slate-600" />
+              }
+              <button type="button" class="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-slate-900/60 text-white hover:bg-slate-900/80" (click)="preview.set(null)" aria-label="Schließen">
+                <app-icon name="x" [size]="18" />
+              </button>
+            </div>
+            <div class="overflow-y-auto p-5">
+              <h3 class="text-lg font-semibold break-words">{{ w.title }}</h3>
+              @if (w.description) {
+                <p class="muted mt-2 text-sm break-words" [innerHTML]="w.description | rich"></p>
+              }
+              @if (w.url) {
+                <a [href]="w.url" target="_blank" rel="noopener noreferrer" class="link mt-3 inline-flex items-center gap-1 text-sm">
+                  <app-icon name="external" [size]="14" />{{ host(w.url) }}
+                </a>
+              }
+            </div>
+            <div class="flex flex-col-reverse gap-2 border-t border-slate-100 p-4 sm:flex-row sm:justify-end dark:border-slate-800">
+              <a [routerLink]="['/wish-edit', w.wishId]" class="btn btn-ghost"><app-icon name="edit" [size]="16" />{{ 'common.edit' | t }}</a>
+              <button type="button" class="btn btn-primary" (click)="addToList(w)" [disabled]="adding() === w.wishId">
+                @if (adding() === w.wishId) {
+                  <app-spinner />
+                } @else {
+                  <app-icon name="plus" [size]="18" />
+                }
+                {{ 'list.addWish' | t }}
+              </button>
+            </div>
+          </div>
+        </div>
       }
 
       <ng-template #claimButtons let-w>
@@ -278,6 +326,8 @@ export default class EventDetailPage implements OnInit {
     return this.myWishes().filter((w) => !w.archived && !inList.has(w.wishId));
   });
 
+  protected readonly preview = signal<Wish | null>(null);
+  protected readonly host = shortUrl;
   protected readonly addableLimit = 10;
   protected readonly showAllAddable = signal(false);
   protected readonly shownAddable = computed(() =>
@@ -410,6 +460,8 @@ export default class EventDetailPage implements OnInit {
     try {
       await this.api.addWishToList(this.eventId, w.wishId);
       await this.loadWishes();
+      this.preview.set(null);
+      this.toast.success(this.i18n.t('list.wishAdded'));
     } catch (e) {
       this.toast.error(e);
     } finally {
