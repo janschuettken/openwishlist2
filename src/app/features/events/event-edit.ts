@@ -81,6 +81,16 @@ import { UserSearch } from '../../shared/user-search';
                   <button type="button" class="btn btn-primary mt-4" (click)="startSanta()" [disabled]="busy() || members().length < 2">
                     <app-icon name="sparkles" [size]="18" />{{ 'santa.start' | t }}
                   </button>
+                  @if (withoutWishes().length) {
+                    <div class="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                      <p class="font-medium">{{ 'santa.withoutWishes' | t: { count: withoutWishes().length } }}</p>
+                      <div class="mt-2 flex flex-wrap gap-1.5">
+                        @for (m of withoutWishes(); track m.userId) {
+                          <span class="chip bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">{{ name(m) }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
                 }
               </section>
             }
@@ -161,6 +171,10 @@ export default class EventEditPage implements OnInit {
 
   protected readonly l = signal<WishList>(emptyList());
   protected readonly members = signal<Member[]>([]);
+  /** userIds, die mindestens einen Wunsch in der Liste haben */
+  private readonly usersWithWishes = signal<Set<number>>(new Set());
+  protected readonly withoutWishes = computed(() => this.members().filter((m) => !this.usersWithWishes().has(m.userId)));
+  protected readonly name = fullName;
   protected readonly loading = signal(false);
   protected readonly busy = signal(false);
   protected readonly isNew = computed(() => !this.id() || Number(this.id()) <= 0);
@@ -187,6 +201,7 @@ export default class EventEditPage implements OnInit {
       }
       this.l.set(list);
       this.members.set(this.sortMembers(members));
+      if (list.eventType === ListType.SecretSanta && !list.santaGenerated) await this.loadListWishes();
     } catch (e) {
       this.toast.error(e);
     } finally {
@@ -212,6 +227,11 @@ export default class EventEditPage implements OnInit {
 
   private async reloadMembers() {
     this.members.set(this.sortMembers(await this.api.getMembers(this.eventId)));
+  }
+
+  private async loadListWishes() {
+    const wishes = await this.api.getWishesOfList(this.eventId);
+    this.usersWithWishes.set(new Set(wishes.map((w) => w.userId)));
   }
 
   private async run(fn: () => Promise<unknown>, success?: string) {
@@ -271,13 +291,17 @@ export default class EventEditPage implements OnInit {
   }
 
   protected async startSanta() {
-    const wishes = await this.api.getWishesOfList(this.eventId);
-    const without = this.members().filter((m) => !wishes.some((w) => w.userId === m.userId));
-    if (without.length) {
-      this.toast.error(this.i18n.t('santa.missingWishes', { names: without.map((m) => m.firstName).join(', ') }));
-      return;
-    }
-    if (!(await this.confirm.ask(this.i18n.t('santa.start.confirm'), { text: this.i18n.t('santa.start.text'), confirmLabel: this.i18n.t('santa.start'), danger: false }))) return;
+    // Frisch laden, falls inzwischen jemand Wünsche eingetragen hat.
+    await this.loadListWishes().catch(() => {});
+    const without = this.withoutWishes();
+    const ok = without.length
+      ? await this.confirm.ask(this.i18n.t('santa.force.confirm'), {
+          text: this.i18n.t('santa.missingWishes', { names: without.map((m) => fullName(m)).join(', ') }),
+          confirmLabel: this.i18n.t('santa.force'),
+          danger: false,
+        })
+      : await this.confirm.ask(this.i18n.t('santa.start.confirm'), { text: this.i18n.t('santa.start.text'), confirmLabel: this.i18n.t('santa.start'), danger: false });
+    if (!ok) return;
     await this.run(async () => {
       await this.api.generateSecretSanta(this.eventId);
       this.patch({ santaGenerated: true });
