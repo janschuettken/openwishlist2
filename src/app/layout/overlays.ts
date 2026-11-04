@@ -32,12 +32,12 @@ import { WishPreviewDialog } from '../shared/wish-preview';
 
     @if (confirm.current(); as c) {
       <div class="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/50 p-4 backdrop-blur-sm sm:items-center" (click)="c.resolve(false)">
-        <div class="card w-full max-w-md p-6 pb-safe" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <div class="card w-full max-w-md p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:p-8" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
           <h2 class="text-lg">{{ c.title }}</h2>
           @if (c.text) {
             <p class="muted mt-2 text-sm">{{ c.text }}</p>
           }
-          <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button type="button" class="btn btn-secondary" (click)="c.resolve(false)">{{ 'common.cancel' | t }}</button>
             <button type="button" class="btn" [class]="c.danger ? 'btn-danger' : 'btn-primary'" (click)="c.resolve(true)">
               {{ c.confirmLabel }}
