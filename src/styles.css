@@ -37,6 +37,13 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* Textfelder wachsen mit dem Inhalt (Größe von Hand ziehen geht weiterhin) */
+  textarea {
+    field-sizing: content;
+    min-height: 7rem;
+    max-height: 70dvh;
+  }
+
   button:not(:disabled) {
     @apply cursor-pointer;
   }
