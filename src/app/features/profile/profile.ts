@@ -173,11 +173,11 @@ export default class ProfilePage {
     }
     this.pwBusy.set(true);
     try {
-      await this.api.changePassword(this.auth.user()!.email ?? '', oldPw, newPw);
+      await this.api.changePassword(oldPw, newPw);
       form.reset();
       this.toast.success(this.i18n.t('profile.password.saved'));
     } catch (e) {
-      this.toast.error(e instanceof Error && e.message === 'Invalid email or password' ? this.i18n.t('profile.password.wrong') : e);
+      this.toast.error(e instanceof Error && e.message === 'Wrong password' ? this.i18n.t('profile.password.wrong') : e);
     } finally {
       this.pwBusy.set(false);
     }

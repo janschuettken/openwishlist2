@@ -88,17 +88,9 @@ export class ApiService {
     return this.call('resetPassword', { resetCode, newPassword }, false);
   }
 
-  /**
-   * Passwort ändern. Das Backend hat dafür keine eigene Action: Wir prüfen das alte
-   * Passwort per Login und setzen das neue über resetPassword mit dem resetCode,
-   * den der Login zurückgibt (danach erzeugt das Backend einen neuen resetCode).
-   */
-  async changePassword(email: string, oldPassword: string, newPassword: string) {
-    const r = await this.call('login', { email, password: oldPassword }, false);
-    storage.set(StorageKeys.session, r.session);
-    const resetCode = r.user?.resetCode;
-    if (!resetCode) throw new ApiError('Passwort konnte nicht geändert werden');
-    await this.resetPassword(resetCode, newPassword);
+  /** Passwort des eingeloggten Nutzers ändern (Backend prüft das alte Passwort) */
+  changePassword(oldPassword: string, newPassword: string) {
+    return this.call('changePassword', { oldPassword, newPassword });
   }
 
   // ---------- Nutzer ----------
