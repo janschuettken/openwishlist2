@@ -234,6 +234,11 @@ export const EN: Record<keyof typeof DE, string> = {
   'user.noLists.text': 'This person has no public lists or lists shared with you.',
 
   'profile.data': 'Personal details',
+  'profile.password': 'Change password',
+  'profile.password.current': 'Current password',
+  'profile.password.save': 'Change password',
+  'profile.password.saved': 'Password changed',
+  'profile.password.wrong': 'The current password is wrong.',
   'profile.settings': 'Settings',
   'profile.theme': 'Appearance',
   'profile.language': 'Language',

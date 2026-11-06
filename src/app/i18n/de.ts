@@ -246,6 +246,11 @@ export const DE = {
 
   // Profil
   'profile.data': 'Persönliche Daten',
+  'profile.password': 'Passwort ändern',
+  'profile.password.current': 'Aktuelles Passwort',
+  'profile.password.save': 'Passwort ändern',
+  'profile.password.saved': 'Passwort geändert',
+  'profile.password.wrong': 'Das aktuelle Passwort stimmt nicht.',
   'profile.settings': 'Einstellungen',
   'profile.theme': 'Darstellung',
   'profile.language': 'Sprache',

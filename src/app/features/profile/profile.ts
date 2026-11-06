@@ -55,6 +55,35 @@ import { AvatarPicker } from './avatar-picker';
             </div>
           </form>
 
+          <!-- Passwort ändern -->
+          <form #pwForm class="card space-y-4 p-5 lg:p-6" (submit)="$event.preventDefault(); changePassword(oldPw.value, newPw.value, newPw2.value, pwForm)">
+            <h2 class="text-lg">{{ 'profile.password' | t }}</h2>
+            <input type="email" class="hidden" autocomplete="username" [value]="u.email ?? ''" />
+            <div>
+              <label class="label" for="oldPw">{{ 'profile.password.current' | t }}</label>
+              <input #oldPw id="oldPw" type="password" class="input" autocomplete="current-password" required />
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="label" for="newPw">{{ 'auth.newPassword' | t }}</label>
+                <input #newPw id="newPw" type="password" class="input" autocomplete="new-password" required />
+              </div>
+              <div>
+                <label class="label" for="newPw2">{{ 'auth.repeatPassword' | t }}</label>
+                <input #newPw2 id="newPw2" type="password" class="input" autocomplete="new-password" required />
+              </div>
+            </div>
+            <p class="muted text-xs">{{ 'auth.passwordHint' | t }}</p>
+            <div class="flex justify-end">
+              <button type="submit" class="btn btn-primary" [disabled]="pwBusy()">
+                @if (pwBusy()) {
+                  <app-spinner />
+                }
+                {{ 'profile.password.save' | t }}
+              </button>
+            </div>
+          </form>
+
           <!-- Einstellungen -->
           <section class="card space-y-5 p-5 lg:p-6">
             <h2 class="text-lg">{{ 'profile.settings' | t }}</h2>
@@ -98,6 +127,7 @@ export default class ProfilePage {
   private readonly picker = viewChild(AvatarPicker);
 
   protected readonly busy = signal(false);
+  protected readonly pwBusy = signal(false);
   protected readonly picking = computed(() => this.picker()?.active() ?? false);
 
   protected readonly themes: { mode: ThemeMode; icon: IconName; label: TKey }[] = [
@@ -129,6 +159,27 @@ export default class ProfilePage {
       this.toast.error(e);
     } finally {
       this.busy.set(false);
+    }
+  }
+
+  protected async changePassword(oldPw: string, newPw: string, newPw2: string, form: HTMLFormElement) {
+    if (newPw.length < 6) {
+      this.toast.error(this.i18n.t('auth.passwordHint'));
+      return;
+    }
+    if (newPw !== newPw2) {
+      this.toast.error(this.i18n.t('auth.reset.mismatch'));
+      return;
+    }
+    this.pwBusy.set(true);
+    try {
+      await this.api.changePassword(this.auth.user()!.email ?? '', oldPw, newPw);
+      form.reset();
+      this.toast.success(this.i18n.t('profile.password.saved'));
+    } catch (e) {
+      this.toast.error(e instanceof Error && e.message === 'Invalid email or password' ? this.i18n.t('profile.password.wrong') : e);
+    } finally {
+      this.pwBusy.set(false);
     }
   }
 
